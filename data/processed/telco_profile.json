@@ -1,0 +1,18 @@
+{
+  "rows": 7043,
+  "columns": 22,
+  "churners": 1869,
+  "retained": 5174,
+  "churn_rate": 26.54,
+  "blank_cells": {
+    "TotalCharges": 11
+  },
+  "duplicate_ids": 0,
+  "numeric_columns": [
+    "SeniorCitizen",
+    "tenure",
+    "MonthlyCharges",
+    "TotalCharges",
+    "churn"
+  ]
+}

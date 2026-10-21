@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Data (keep raw, exclude processed intermediates if large)
+# data/processed/
+
+# Reports (generated)
+reports/figures/
+reports/*.xlsx
+
+# Power BI (generated)
+powerbi/data/
+powerbi/dashboard_preview.html
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

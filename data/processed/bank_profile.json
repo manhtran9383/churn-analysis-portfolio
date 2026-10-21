@@ -1,0 +1,23 @@
+{
+  "rows": 10000,
+  "columns": 15,
+  "churners": 2037,
+  "retained": 7963,
+  "churn_rate": 20.37,
+  "blank_cells": {},
+  "duplicate_ids": 0,
+  "numeric_columns": [
+    "RowNumber",
+    "CustomerId",
+    "CreditScore",
+    "Age",
+    "Tenure",
+    "Balance",
+    "NumOfProducts",
+    "HasCrCard",
+    "IsActiveMember",
+    "EstimatedSalary",
+    "Exited",
+    "churn"
+  ]
+}
