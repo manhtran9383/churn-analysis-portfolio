@@ -43,21 +43,29 @@ jobs:
 
       - name: Test import
         shell: bash
-        run: python -c "import src.run_churn_analysis; print('Import OK')"
+        run: |
+          export PYTHONPATH="$(pwd):${PYTHONPATH}"
+          python -c "import src.run_churn_analysis; print('Import OK')"
 
       - name: Run pipeline  --dataset telco
-        run: python -m src.run_churn_analysis --dataset telco
+        run: |
+          export PYTHONPATH="$(pwd):${PYTHONPATH}"
+          python -m src.run_churn_analysis --dataset telco
         if: matrix.dataset == 'telco'
         shell: bash
 
       - name: Run pipeline  --dataset bank
-        run: python -m src.run_churn_analysis --dataset bank
+        run: |
+          export PYTHONPATH="$(pwd):${PYTHONPATH}"
+          python -m src.run_churn_analysis --dataset bank
         if: matrix.dataset == 'bank'
         shell: bash
 
       - name: Run tests
         shell: bash
-        run: pytest tests -q --cov=src --cov-report=term-missing
+        run: |
+          export PYTHONPATH="$(pwd):${PYTHONPATH}"
+          pytest tests -q --cov=src --cov-report=term-missing
 
       - name: Upload reports artifact
         if: always()
