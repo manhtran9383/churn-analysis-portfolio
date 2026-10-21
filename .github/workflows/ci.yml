@@ -29,29 +29,15 @@ jobs:
           pip install -r requirements.txt
           pip install "streamlit>=1.40" pytest "nbformat>=5.10" "nbclient>=0.8" "ipykernel>=6.25"
 
-      - name: Debug before run
-        shell: bash
-        run: |
-          echo "Working directory: $(pwd)"
-          echo "Python: $(python --version)"
-          echo "Files in cwd: $(ls -la)"
-          echo "src/ exists: $(test -d src && echo yes || echo no)"
-          echo "src/run_churn_analysis.py exists: $(test -f src/run_churn_analysis.py && echo yes || echo no)"
-          echo "data/raw/ exists: $(test -d data/raw && echo yes || echo no)"
-          echo "data/raw/Telco-Customer-Churn.csv exists: $(test -f data/raw/Telco-Customer-Churn.csv && echo yes || echo no)"
-          echo "data/raw/Churn_Modelling.csv exists: $(test -f data/raw/Churn_Modelling.csv && echo yes || echo no)"
-          python -c "import sys; print('Python path:'); [print(p) for p in sys.path]"
-
       - name: Run pipeline
         shell: bash
         run: |
           python src/run_churn_analysis.py --dataset ${{ matrix.dataset }}
-        continue-on-error: true
 
       - name: Run tests
         shell: bash
         run: |
-          pytest tests -q --cov=src --cov-report=term-missing
+          pytest tests -q --tb=short
 
       - name: Upload reports artifact
         if: always()
