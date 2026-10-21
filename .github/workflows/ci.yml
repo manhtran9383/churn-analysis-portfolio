@@ -35,7 +35,7 @@ jobs:
           echo "Working directory: $(pwd)"
           echo "Python: $(python --version)"
           echo "Python path: $(which python)"
-          echo "Python executable: $(python -c \"import sys; print(sys.executable)\")"
+          echo "Python executable: $(python -c 'import sys; print(sys.executable)')"
           echo "Files in cwd: $(ls -la)"
           echo "src/ exists: $(test -d src && echo yes || echo no)"
           echo "data/raw/ exists: $(test -d data/raw && echo yes || echo no)"
@@ -43,8 +43,7 @@ jobs:
 
       - name: Test import
         shell: bash
-        run: |
-          python -c "import src.run_churn_analysis; print('Import OK')"
+        run: python -c "import src.run_churn_analysis; print('Import OK')"
 
       - name: Run pipeline  --dataset telco
         run: python -m src.run_churn_analysis --dataset telco
