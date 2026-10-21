@@ -32,6 +32,8 @@ jobs:
       - name: Run pipeline
         shell: bash
         run: |
+          python -m pip list | grep -E "pandas|numpy|scikit|streamlit|lifelines"
+          python -c "import src.config; import src.run_churn_analysis; print('Import OK')"
           python src/run_churn_analysis.py --dataset ${{ matrix.dataset }}
 
       - name: Run tests
