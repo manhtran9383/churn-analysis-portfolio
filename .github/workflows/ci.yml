@@ -31,15 +31,28 @@ jobs:
           pip install -r requirements.txt
           pip install "streamlit>=1.40" pytest "nbformat>=5.10" "nbclient>=0.8" "ipykernel>=6.25"
 
+      - name: Debug environment
+        shell: bash
+        run: |
+          echo "Working directory: $(pwd)"
+          echo "Python: $(python --version)"
+          echo "Python path: $(which python)"
+          echo "Files in cwd: $(ls -la)"
+          echo "src/ exists: $(test -d src && echo yes || echo no)"
+          echo "data/raw/ exists: $(test -d data/raw && echo yes || echo no)"
+
       - name: Run pipeline  --dataset telco
         run: python -m src.run_churn_analysis --dataset telco
         if: matrix.dataset == 'telco'
+        shell: bash
 
       - name: Run pipeline  --dataset bank
         run: python -m src.run_churn_analysis --dataset bank
         if: matrix.dataset == 'bank'
+        shell: bash
 
       - name: Run tests
+        shell: bash
         run: pytest tests -q --cov=src --cov-report=term-missing
 
       - name: Upload reports artifact
