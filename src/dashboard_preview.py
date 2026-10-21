@@ -3,10 +3,11 @@ Stage - Dashboard preview (churn project).
 
 Renders the exact Power BI report design as a self-contained HTML file so the
 report can be reviewed in a browser before (or without) assembling the .pbix.
-Reads the Power BI data pack written by `src.powerbi_export.py`; every figure is
-embedded as base64 so the file works offline and can be shared.
+Reads the Power BI data pack written by `src.powerbi_export.py` for the same
+dataset (`powerbi/data/<dataset>/`); every figure is embedded as base64 so the
+file works offline and can be shared.
 
-  powerbi/dashboard_preview.html
+  powerbi/dashboard_preview_telco.html   (or dashboard_preview_bank.html)
 """
 from __future__ import annotations
 
@@ -89,18 +90,18 @@ footer { padding:14px 26px; font-size:11px; color:var(--muted); }
 """
 
 
-def _read(paths: Paths, name: str) -> pd.DataFrame | None:
-    src = paths.root / "powerbi" / "data" / name
+def _read(paths: Paths, dataset: str, name: str) -> pd.DataFrame | None:
+    src = paths.root / "powerbi" / "data" / dataset / name
     if not src.exists():
         return None
     return pd.read_csv(src)
 
 
-def _cards(paths: Paths) -> list[tuple[str, str, str]]:
-    impact = _read(paths, "kpi_business_impact.csv")
-    mc = _read(paths, "kpi_model_comparison.csv")
-    surv = _read(paths, "kpi_survival_summary.csv")
-    dim = _read(paths, "dim_customer.csv")
+def _cards(paths: Paths, dataset: str) -> list[tuple[str, str, str]]:
+    impact = _read(paths, dataset, "kpi_business_impact.csv")
+    mc = _read(paths, dataset, "kpi_model_comparison.csv")
+    surv = _read(paths, dataset, "kpi_survival_summary.csv")
+    dim = _read(paths, dataset, "dim_customer.csv")
 
     churn_rate = f"{dim['churn'].mean():.2%}" if dim is not None else "—"
     n_cust = f"{len(dim):,}" if dim is not None else "—"
@@ -128,8 +129,8 @@ def _cards(paths: Paths) -> list[tuple[str, str, str]]:
     ]
 
 
-def build_html(paths: Paths) -> str:
-    cards = _cards(paths)
+def build_html(paths: Paths, dataset: str = "telco") -> str:
+    cards = _cards(paths, dataset)
     card_html = "".join(
         f"<div class='card'><div class='k'>{k}</div>"
         f"<div class='v'>{v}</div><div class='s'>{s}</div></div>"
@@ -141,21 +142,21 @@ def build_html(paths: Paths) -> str:
         for name, title in FIGURES
     )
 
-    seg = _read(paths, "kpi_churn_by_segment.csv")
-    ten = _read(paths, "kpi_tenure_bands.csv")
-    surv = _read(paths, "kpi_survival_summary.csv")
-    cox = _read(paths, "kpi_cox_hazards.csv")
-    lift = _read(paths, "kpi_targeting_lift.csv")
+    seg = _read(paths, dataset, "kpi_churn_by_segment.csv")
+    ten = _read(paths, dataset, "kpi_tenure_bands.csv")
+    surv = _read(paths, dataset, "kpi_survival_summary.csv")
+    cox = _read(paths, dataset, "kpi_cox_hazards.csv")
+    lift = _read(paths, dataset, "kpi_targeting_lift.csv")
 
     return f"""<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Customer Churn Analysis — Dashboard Preview</title>
+<title>Customer Churn Analysis ({dataset}) — Dashboard Preview</title>
 <style>{CSS}</style></head>
 <body>
 <header>
   <h1>CUSTOMER CHURN ANALYSIS</h1>
-  <p>Power BI report design preview &nbsp;•&nbsp; built {datetime.now():%Y-%m-%d %H:%M}</p>
+  <p>Power BI report design preview ({dataset}) &nbsp;•&nbsp; built {datetime.now():%Y-%m-%d %H:%M}</p>
 </header>
 <div class="wrap">
   <div class="cards">{card_html}</div>
@@ -180,16 +181,16 @@ def build_html(paths: Paths) -> str:
       {_table(lift, pct=("churn_rate_pct", "lift_vs_all_pp"))}</div>
   </div>
 </div>
-<footer>Source: churn-project/powerbi/data/ • same design as the .pbix build pack</footer>
+<footer>Source: churn-project/powerbi/data/{dataset}/ • same design as the .pbix build pack</footer>
 </body></html>"""
 
 
-def run(paths: Paths | None = None) -> dict[str, str]:
+def run(paths: Paths | None = None, dataset: str = "telco") -> dict[str, str]:
     """Write the HTML preview. Returns {preview: path}."""
     paths = paths or Paths()
-    out = paths.root / "powerbi" / "dashboard_preview.html"
+    out = paths.root / "powerbi" / f"dashboard_preview_{dataset}.html"
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(build_html(paths), encoding="utf-8")
+    out.write_text(build_html(paths, dataset), encoding="utf-8")
     return {"preview": str(out)}
 
 

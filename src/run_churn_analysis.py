@@ -119,7 +119,7 @@ if __name__ == "__main__":
             print(f"{name}: {count}")
     elif args.stage == "preview":
         from .dashboard_preview import run as run_preview
-        for kind, path in run_preview().items():
+        for kind, path in run_preview(dataset=args.dataset).items():
             print(f"{kind}: {path}")
     else:
         run(args.dataset)

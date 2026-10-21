@@ -1,19 +1,22 @@
 """
 Stage - Power BI export (churn project).
 
-Writes a Power BI-ready data pack into `powerbi/`:
+Writes a Power BI-ready data pack into `powerbi/data/<dataset>/`
+(one folder per dataset, so `telco` and `bank` packs coexist and the CI
+matrix never overwrites one with the other):
 
   powerbi/
-    data/dim_customer.csv          grain = one row per customer
-                                   (churn label, churn_risk, survival prob)
-    data/dim_tenure.csv            tenure dimension (month -> band) + churn rate
-    data/kpi_churn_by_segment.csv  churn rate by segment category
-    data/kpi_model_comparison.csv  ROC / PR / precision / recall per model
-    data/kpi_survival_summary.csv  Kaplan-Meier summary by segment
-    data/kpi_cox_hazards.csv       hazard ratios + confidence intervals
-    data/kpi_business_impact.csv   revenue at risk for the top-`cap` riskers
-    data/kpi_targeting_lift.csv    churn rate by size of the contacted list
-    data/connection.txt            exact connection options
+    data/telco/ (or data/bank/)
+      dim_customer.csv          grain = one row per customer
+                                (churn label, churn_risk, survival prob)
+      dim_tenure.csv            tenure dimension (month -> band) + churn rate
+      kpi_churn_by_segment.csv  churn rate by segment category
+      kpi_model_comparison.csv  ROC / PR / precision / recall per model
+      kpi_survival_summary.csv  Kaplan-Meier summary by segment
+      kpi_cox_hazards.csv       hazard ratios + confidence intervals
+      kpi_business_impact.csv   revenue at risk for the top-`cap` riskers
+      kpi_targeting_lift.csv    churn rate by size of the contacted list
+      connection.txt            exact connection options
 
 Power BI connects either by importing these CSVs (portable, no driver needed)
 or by importing the Excel workbook. Both paths are documented in
@@ -107,12 +110,13 @@ def _dim_tenure(df: pd.DataFrame, dataset: str) -> pd.DataFrame:
     return per_month
 
 
-def _write_connection(paths: Paths) -> str:
+def _write_connection(paths: Paths, dataset: str) -> str:
+    folder = paths.root / "powerbi" / "data" / dataset
     lines = [
         "# Power BI connection - Customer Churn Analysis",
         "#",
-        "# Option A - import the CSVs in powerbi/data/ (recommended, portable)",
-        "Folder: " + (paths.root / "powerbi" / "data").as_posix(),
+        f"# Option A - import the CSVs in powerbi/data/{dataset}/ (recommended, portable)",
+        "Folder: " + folder.as_posix(),
         "",
         "# Option B - import the Excel workbook",
         "File:   " + (paths.root / "reports" / "Churn_Analysis.xlsx").as_posix(),
@@ -120,7 +124,7 @@ def _write_connection(paths: Paths) -> str:
         "# No driver / no database needed for either option.",
         "# See powerbi/README.md for the full build instructions.",
     ]
-    path = paths.root / "powerbi" / "data" / "connection.txt"
+    path = folder / "connection.txt"
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return str(path)
 
@@ -128,7 +132,7 @@ def _write_connection(paths: Paths) -> str:
 def run(paths: Paths | None = None, dataset: str = "telco") -> dict:
     """Write the Power BI data pack. Returns {table: rows}."""
     paths = paths or Paths()
-    out = paths.root / "powerbi" / "data"
+    out = paths.root / "powerbi" / "data" / dataset
     out.mkdir(parents=True, exist_ok=True)
 
     spec = DATASETS[dataset]
@@ -191,7 +195,7 @@ def run(paths: Paths | None = None, dataset: str = "telco") -> dict:
     )
 
     counts["connection"] = 1
-    _write_connection(paths)
+    _write_connection(paths, dataset)
     return counts
 
 
