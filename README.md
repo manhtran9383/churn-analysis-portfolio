@@ -19,8 +19,8 @@ manager an auditable, end-to-end analysis — raw data → insight → model →
   0.71 (bank). Log-rank tests confirm Contract / Geography drive *when* churn
   happens. Median survival, survival-at-horizon (6/12/24/36/48/60/72 months),
   and per-customer survival probabilities at 12 months for dynamic ranking.
-* **Reproducible.** One command, a fixed `random_state`, and a `data/raw/`
-  registry. Nothing in `data/processed/` is hand-edited — it is rebuilt every run.
+* **Reproducible.** One command, a fixed `random_state`, and a `data/raw/` registry.
+  Nothing in `data/processed/` is hand-edited — it is rebuilt every run.
 
 ## Quick start
 
@@ -57,8 +57,8 @@ churn-project/
 │   │                          #    targeting, business impact, survival_summary, surv_cox
 │   └── figures/                # 6 PNGs (segment bar, retention curve, top
 │                                #    features, logistic importance, model cmp, survival curve)
-└── tests/                      # optional: cover the full pipeline in an isolated
-                                 #    copy of the project
+├── powerbi/                    # Power BI build pack: 10 CSVs + M code + DAX + layout
+└── notebooks/                  # executed Jupyter notebooks (0 error cells)
 ```
 
 ## Outputs at a glance
