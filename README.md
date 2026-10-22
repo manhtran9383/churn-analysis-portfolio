@@ -29,10 +29,43 @@ python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\act
 pip install -r requirements.txt
 python -m src.run_churn_analysis --dataset telco    # telecom deep-dive
 python -m src.run_churn_analysis --dataset bank     # bank comparison
-python -m src.run_churn_analysis --dataset hr       # new: IBM HR attrition (1,470 employees)
+python -m src.run_churn_analysis --dataset hr       # human-resources attrition (1,470 employees)
 ```
 
 Both run in ~30 s on a laptop.
+
+### Human resources (HR) — streamlined 1-pager
+
+The HR dataset (`HR_Employee_Attrition.csv`, 1,470 employees, 16.1% attrition) is a
+single-command portfolio slice aimed at a **people analytics / HR** audience:
+
+```bash
+# run the full HR analysis (figures + Excel + model + survival + targeting)
+python -m src.run_churn_analysis --dataset hr
+```
+
+What the HR run surfaces — no extra modelling code needed beyond the shared pipeline:
+
+- **Churn mix** (`churn_by_segment` tab): top driver is *Sales Representative* at 39.8%
+  churn vs a 16.1% base rate; `OverTime`, `MonthlyIncome` and *JobRole* also rank high.
+- **Retention by tenure** (`tenure_bands` tab): churn concentrates in the first 5 years
+  (`YearsAtCompany` 0–5), then plateaus — an early-retention intervention window.
+- **Risk ranking** (`targeting_lift` tab): top-500 predicted leavers vs the rest of the
+  base; `Lift` column shows how much churn rate concentrates at the top of the list.
+- **Survival/KM** (`surv_cox` + `Survival_curve.png`): right-censored KM by
+  `Department` + Cox PH with tenure-aware horizons (1, 2, 3, 5, 7, 10, 15, 20 years).
+- **Business impact** (`business_impact` tab): `revenue_at_risk` is `n/a` (no per-employee
+  revenue column) — HR's "cost" is attrition itself, so the sheet surfaces the
+  *churn-rate concentration* and *targeting lift* instead.
+- **Catalog**: `EmployeeNumber` (customer ID) is auto-dropped; `EmployeeCount`,
+  `Over18`, `StandardHours` (zero-variance columns) are auto-dropped; `JobRole`,
+  `Department`, `BusinessTravel`, `OverTime`, `MaritalStatus`, `Gender`,
+  `EducationField` are one-hot encoded for the models.
+- **Honor roll**: Cox concordance 0.937 (HR) vs 0.844 (telco) vs 0.720 (bank).
+
+This differs from the two revenue datasets in one deliberate way: the "cost" of attrition is
+not a monthly revenue number, so the impact sheet reports churn-concentration metrics
+rather than `revenue_at_risk`.
 
 ## Project layout
 
