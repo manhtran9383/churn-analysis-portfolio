@@ -4,7 +4,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from .config import DATASETS
+from .config import DATASETS, TENURE_BINS
 
 
 def _churn_rate(g: pd.DataFrame) -> pd.DataFrame:
@@ -55,7 +55,7 @@ def top_features(df: pd.DataFrame, top_n: int = 10) -> pd.DataFrame:
 
 def churn_by_tenure_band(df: pd.DataFrame, dataset: str, bins: list[float] | None = None) -> pd.DataFrame:
     """Churn rate as tenure increases (retention curve)."""
-    bins = bins or [0, 12, 24, 36, 48, 60, 72]
+    bins = bins or TENURE_BINS.get(dataset, [0, 12, 24, 36, 48, 60, 72, 84])
     df = df.copy()
     tenure_col = DATASETS[dataset]["tenure"]
     df[tenure_col] = pd.to_numeric(df[tenure_col], errors="coerce")

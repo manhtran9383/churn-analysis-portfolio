@@ -13,12 +13,9 @@ dataset:
 model:
   test_size: 0.20
   random_state: 42
-  cv_folds: 5
 
 # Business impact
 impact:
-  # Cost of acquiring one new customer, as a multiple of the monthly margin
-  cac_multiple: 4.0
   # Margin per unit of monthly revenue (used to turn revenue into profit)
   margin_pct: 0.35
 
@@ -26,4 +23,3 @@ impact:
 reporting:
   top_n: 10
   excel_file: "reports/Churn_Analysis.xlsx"
-  pdf_file: "reports/Churn_Report.pdf"

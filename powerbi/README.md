@@ -31,14 +31,14 @@ under `powerbi/data/<dataset>/`.
 | File | Rows | Grain | Key columns |
 |---|---|---|---|
 | `dim_customer.csv` | 7,043 (telco) / 10,000 (bank) | 1 row / customer | `customerID` (telco) or `CustomerId` (bank), `tenure`, `Contract`/`Geography`, `MonthlyCharges`, `churn_risk_score`, `surv_prob_at_horizon`, `churn`, `Churn` |
-| `dim_tenure.csv` | 72 (telco) / 11 (bank) | 1 row / tenure month | `tenure_month`, `tenure_band`, `customers`, `churners`, `churn_rate_pct`, `survival_prob` |
+| `dim_tenure.csv` | 73 (telco) / 11 (bank) | 1 row / tenure unit | `tenure_month`, `tenure_band`, `customers`, `churners`, `churn_rate_pct`, `survival_prob` |
 | `kpi_churn_by_segment.csv` | 20 (telco) / 9 (bank) | segment × category | `segment`, `group`, `churn_rate`, `count`, `churners` |
-| `kpi_tenure_bands.csv` | 6 (telco) / 1 (bank) | tenure band | `tenure_band`, `customers`, `churners`, `churn_rate_pct`, `survival_prob` |
-| `kpi_model_comparison.csv` | 2 | model | `model`, `roc_auc`, `pr_auc`, `accuracy`, `precision`, `recall`, `f1` |
+| `kpi_tenure_bands.csv` | 7 (telco) / 11 (bank) | tenure band | `tenure_band`, `customers`, `churners`, `churn_rate_pct`, `survival_prob` |
+| `kpi_model_comparison.csv` | 2 | model | `model`, `roc_auc`, `pr_auc`, `recall_1`, `precision_1`, `f1_1`, `support_1`, `tn`, `fp`, `fn`, `tp`, `feature_importance` |
 | `kpi_survival_summary.csv` | 4 | segment | `group`, `median_survival_time`, `survival_at_12`, `survival_at_24`, `survival_at_36`, `survival_at_48`, `survival_at_60`, `survival_at_72` |
-| `kpi_cox_hazards.csv` | 17 (telco) / 10 (bank) | covariate | `covariate`, `hazard_ratio`, `ci_lower`, `ci_upper`, `p_value`, `concordance` |
-| `kpi_business_impact.csv` | 1 | KPI | `revenue_at_risk`, `estimated_monthly_profit_lost`, `top_n`, `base_churn_rate`, `targeted_churn_rate`, `lift` |
-| `kpi_targeting_lift.csv` | 6 | list size | `k`, `churners_caught`, `total_k`, `churn_rate_pct`, `lift_vs_all_pp` |
+| `kpi_cox_hazards.csv` | 17 (telco) / 10 (bank) | covariate | `covariate`, `hazard_ratio`, `hr_lower_95`, `hr_upper_95`, `p_value`, `concordance`, `coef` |
+| `kpi_business_impact.csv` | 1 | KPI | `cap`, `customers_at_risk`, `revenue_at_risk`, `estimated_monthly_profit_lost`, `avg_risk_of_top_cap` |
+| `kpi_targeting_lift.csv` | 6 | list size | `list_size`, `churners`, `customers`, `churn_rate_pct`, `avg_risk`, `lift_vs_all_pp` |
 
 > **Telco vs Bank:** re-run the stage with `--dataset bank` to get the bank
 > pack. Tables are identical except `dim_customer` has `Geography` instead of
@@ -73,7 +73,7 @@ under `powerbi/data/<dataset>/`.
 
 ## HTML Preview (no Power BI needed)
 
-Open `dashboard_preview.html` in any browser — it contains:
+Open `dashboard_preview_<dataset>.html` in any browser — it contains:
 
 - All 6 pipeline figures embedded as base64 PNGs (works offline)
 - KPI cards with the exact numbers from the pipeline
@@ -111,7 +111,8 @@ proportional hazards** model (one-hot encoded categoricals, 0.844 concordance).
 The classification models (Logistic + Gradient Boosting) ignore censoring and
 are biased for time-to-event — they are included for business familiarity and
 comparison. Targeting uses the logistic probability score; lift at K = 500 is
-≈ 2.6× base rate. Revenue at risk uses `MonthlyCharges` × churners in top-K.
+≈ 2.02× base rate (telco) / 2.19× (bank), measured on the hold-out test set.
+Revenue at risk uses `MonthlyCharges` × churners in top-K.
 
 ## Files for your portfolio
 
@@ -121,7 +122,7 @@ comparison. Targeting uses the logistic probability score; lift at K = 500 is
 | Jupyter (AI/LLM reframing) | `notebooks/churn_ai_llm_reframing.ipynb` | Prompt-as-ranker sketch, guardrails |
 | Streamlit demo | `streamlit_app.py` → `streamlit run streamlit_app.py` | 4 tabs: Ranking / Survival / AI / LLM |
 | Power BI .pbix | Assemble from this pack | Full 5-page report |
-| HTML preview | `powerbi/dashboard_preview.html` | Shareable, offline |
+| HTML preview | `powerbi/dashboard_preview_<dataset>.html` | Shareable, offline |
 | Methodology write-up | `README.md` (project root) | Recruiter-ready bullets |
 
 ## License & attribution

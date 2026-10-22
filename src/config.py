@@ -75,3 +75,14 @@ DATASETS = {
         "fig_dir": Path("reports/"),
     },
 }
+
+# Tenure bins for retention curves (dataset-aware)
+# Telco tenure is in months (0-72), Bank tenure is in years (0-10).
+TENURE_BINS = {
+    "telco": [0, 12, 24, 36, 48, 60, 72, 84],
+    "bank": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+}
+TENURE_LABELS = {
+    "telco": ["0-12", "12-24", "24-36", "36-48", "48-60", "60-72", "72-84"],
+    "bank": ["0-1", "1-2", "2-3", "3-4", "4-5", "5-6", "6-7", "7-8", "8-9", "9-10", "10-11"],
+}

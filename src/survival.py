@@ -80,7 +80,9 @@ def _survival_frame(df: pd.DataFrame, dataset: str) -> pd.DataFrame:
     spec = DATASETS[dataset]
     out = df.copy()
     out = out.rename(columns={spec["tenure"]: "time"})
+    out["time"] = pd.to_numeric(out["time"], errors="coerce")
     out["event"] = _event_series(df, dataset)
+    out = out.dropna(subset=["time", "event"])
     return out
 
 

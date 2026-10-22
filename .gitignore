@@ -19,6 +19,7 @@ reports/*.xlsx
 # Power BI (generated)
 powerbi/data/
 powerbi/dashboard_preview.html
+powerbi/dashboard_preview_*.html
 
 # IDE
 .vscode/

@@ -59,18 +59,31 @@ def run(dataset: str = "telco"):
     from .analysis import churn_by_segment, top_features, churn_by_tenure_band
     seg = churn_by_segment(df_raw, dataset)
     feat = top_features(df, cfg["reporting"]["top_n"])
-    ten = churn_by_tenure_band(df, dataset, bins=[0, 12, 24, 36, 48, 60, 72])
+    ten = churn_by_tenure_band(df, dataset)
 
     # 3. model -------------------------------------------------------
-    from .model import fit_models
+    from .model import fit_models, _infer_features
     models, results = fit_models(df, dataset, seed=cfg["model"]["random_state"])
-    log.info("models saved → %s", paths.reports)
+    log.info("models fitted")
+
+    # Re-create the train/test split to get hold-out test set for honest impact
+    from sklearn.model_selection import train_test_split
+    prepared = _infer_features(df, dataset)
+    X = prepared["X"][prepared["usable"]]
+    y = prepared["y"]
+    test_size = cfg.get("model", {}).get("test_size", 0.20)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=test_size, random_state=cfg["model"]["random_state"], stratify=y
+    )
 
     # 4. business impact ----------------------------------------------
     from .impact import risk_score, targeting_lift, revenue_at_risk
-    risked = risk_score(df, dataset, models["logistic"])
-    tl = targeting_lift(risked, models["logistic"], cap=500)
-    impact = pd.DataFrame([revenue_at_risk(risked, dataset, models["logistic"], cap=500)])
+    # Use TEST set for honest impact (no in-sample leakage)
+    risked_test = risk_score(X_test.join(y_test), dataset, models["logistic"])
+    tl = targeting_lift(risked_test, cap=500)
+    # For full-base revenue estimate, use full data (in-sample, but documented)
+    risked_full = risk_score(df, dataset, models["logistic"])
+    impact = pd.DataFrame([revenue_at_risk(risked_full, dataset, models["logistic"], cap=500)])
 
     # 5. figures ------------------------------------------------------
     from .report import make_figures, build_excel
@@ -94,9 +107,20 @@ def run(dataset: str = "telco"):
           f"PR-AUC {best['pr_auc']:.3f}")
     imp = impact.iloc[0]
     ra = imp["revenue_at_risk"]
-    ra_str = f"{ra:,.0f}" if pd.notna(ra) else "n/a (no monthly_revenue)"
-    print(f"Top-500 riskers: {int(imp['customers_at_risk'])} customers; "
-          f"revenue at risk: {ra_str}/month")
+    has_monthly = pd.notna(ra)
+    ra_str = f"{ra:,.0f}" if has_monthly else "n/a"
+    if has_monthly:
+        print(f"Top-500 riskers: {int(imp['customers_at_risk'])} customers; "
+              f"revenue at risk: {ra_str}/month (in-sample estimate)")
+    else:
+        print(f"Top-500 riskers: {int(imp['customers_at_risk'])} customers; "
+              f"revenue at risk: n/a (no monthly revenue column; in-sample estimate)")
+    # Honest lift on HOLD-OUT test set (no in-sample leakage)
+    precision = tl[tl["list_size"] == 500]["churn_rate_pct"].values[0]
+    base_rate = prof["churn_rate"]
+    lift = precision / base_rate
+    print(f"Honest lift (test set): top-500 precision {precision:.1f}% "
+          f"({lift:.2f}× base rate {base_rate:.2f}%)")
     print(f"\nSurvival (Cox PH): concordance = {conc:.3f}")
     print(f"\nOutputs: {paths.figures} | {excel_path}")
     return {"dataset": dataset, "results": results,

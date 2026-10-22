@@ -13,18 +13,20 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from pathlib import Path
 
-from .config import DATASETS
+from typing import Optional
+from .config import DATASETS, Paths
 from .analysis import (churn_by_segment, top_features,
                        churn_by_tenure_band)
 
 FIGS = {
-    "segments": "figures/Churn_by_segment.png",
-    "tenure": "figures/Retention_curve_by_tenure.png",
-    "features": "figures/Top_numeric_features.png",
-    "models": "figures/Model_comparison.png",
-    "importance": "figures/Logistic_feature_importance.png",
-    "survival": "figures/Survival_curve.png",
+    "segments": "Churn_by_segment.png",
+    "tenure": "Retention_curve_by_tenure.png",
+    "features": "Top_numeric_features.png",
+    "models": "Model_comparison.png",
+    "importance": "Logistic_feature_importance.png",
+    "survival": "Survival_curve.png",
 }
 
 
@@ -35,7 +37,7 @@ def _style_ax(ax):
     ax.tick_params(colors="#444444")
 
 
-def churn_segment_chart(df_seg: pd.DataFrame, dataset: str, top_n: int = 8):
+def churn_segment_chart(df_seg: pd.DataFrame, dataset: str, top_n: int = 8, paths: Paths = None):
     spec = DATASETS[dataset]
     labs = [f"{c} = {v}\n({r*100:.1f}%)" for c, v, r in
             zip(df_seg["segment"].head(top_n), df_seg["group"].head(top_n),
@@ -46,30 +48,41 @@ def churn_segment_chart(df_seg: pd.DataFrame, dataset: str, top_n: int = 8):
     fig, ax = plt.subplots(figsize=(9, max(3, 0.45 * len(rates))))
     ax.barh(labs, rates, color=colors)
     ax.set_xlabel("Churn rate (%)", color="#444444")
-    ax.set_title("Churn rate by segment (telco)", color="#1a1a1a", fontsize=13)
+    ax.set_title(f"Churn rate by segment ({spec['label']})", color="#1a1a1a", fontsize=13)
     _style_ax(ax)
     ax.set_xlim(0, min(1.0, max(rates) * 1.3))
     fig.tight_layout()
-    fig.savefig(DATASETS[dataset]["fig_dir"] / FIGS["segments"], dpi=150)
+    if paths:
+        fig.savefig(paths.figures / FIGS["segments"], dpi=150)
+    else:
+        fig.savefig(Path("reports/figures/Churn_by_segment.png"), dpi=150)
     plt.close(fig)
 
 
-def retention_chart(df_ten: pd.DataFrame):
+def retention_chart(df_ten: pd.DataFrame, dataset: str, paths: Paths = None):
+    spec = DATASETS[dataset]
+    time_unit = "months" if dataset == "telco" else "years"
     rates = df_ten["churn_rate"] * 100
     fig, ax = plt.subplots(figsize=(8, 4.5))
     ax.plot(df_ten["tenure_band"].astype(str), rates, marker="o", color="#d9534f")
     ax.fill_between(df_ten["tenure_band"].astype(str), 0, rates,
                     color="#d9534f", alpha=0.12)
-    ax.set_xlabel("Tenure band (months)", color="#444444")
+    ax.set_xlabel(f"Tenure band ({time_unit})", color="#444444")
     ax.set_ylabel("Churn rate (%)", color="#444444")
     ax.set_title("Retention curve - churn falls sharply with tenure", color="#1a1a1a")
     _style_ax(ax)
     fig.tight_layout()
-    fig.savefig(DATASETS["telco"]["fig_dir"] / FIGS["tenure"], dpi=150)
+    if paths:
+        fig.savefig(paths.figures / FIGS["tenure"], dpi=150)
+    else:
+        fig.savefig(Path("reports/figures/Retention_curve_by_tenure.png"), dpi=150)
     plt.close(fig)
 
 
-def features_chart(df_feat: pd.DataFrame):
+from typing import Optional
+
+
+def features_chart(df_feat: pd.DataFrame, paths: Optional[Paths] = None):
     feat = df_feat.sort_values("abs_corr")
     labels = [f for f in feat["feature"]]
     vals = feat["abs_corr"].values
@@ -79,11 +92,14 @@ def features_chart(df_feat: pd.DataFrame):
     ax.set_title("Top numeric features vs churn", color="#1a1a1a")
     _style_ax(ax)
     fig.tight_layout()
-    fig.savefig(DATASETS["telco"]["fig_dir"] / FIGS["features"], dpi=150)
+    if paths:
+        fig.savefig(paths.figures / FIGS["features"], dpi=150)
+    else:
+        fig.savefig(Path("reports/figures/Top_numeric_features.png"), dpi=150)
     plt.close(fig)
 
 
-def model_chart(results: pd.DataFrame):
+def model_chart(results: pd.DataFrame, paths: Optional[Paths] = None):
     rows = results[results["model"].isin(["logistic", "gradient_boosting"])]
     fig, axes = plt.subplots(1, 2, figsize=(11, 4.2))
     for ax, (metric, name) in zip(axes, [
@@ -96,11 +112,14 @@ def model_chart(results: pd.DataFrame):
         ax.tick_params(axis="x", labelsize=10)
     fig.suptitle("Churn model comparison", color="#1a1a1a", fontsize=14)
     fig.tight_layout()
-    fig.savefig(DATASETS["telco"]["fig_dir"] / FIGS["models"], dpi=150)
+    if paths:
+        fig.savefig(paths.figures / FIGS["models"], dpi=150)
+    else:
+        fig.savefig(Path("reports/figures/Model_comparison.png"), dpi=150)
     plt.close(fig)
 
 
-def importance_chart(results: pd.DataFrame):
+def importance_chart(results: pd.DataFrame, paths: Optional[Paths] = None):
     fi = results[results["model"] == "logistic"]["feature_importance_df"].iloc[0]
     feat = fi.sort_values("importance")
     fig, ax = plt.subplots(figsize=(8, max(4, 0.4 * len(feat))))
@@ -109,7 +128,10 @@ def importance_chart(results: pd.DataFrame):
     ax.set_title("Logistic feature importance", color="#1a1a1a")
     _style_ax(ax)
     fig.tight_layout()
-    fig.savefig(DATASETS["telco"]["fig_dir"] / FIGS["importance"], dpi=150)
+    if paths:
+        fig.savefig(paths.figures / FIGS["importance"], dpi=150)
+    else:
+        fig.savefig(Path("reports/figures/Logistic_feature_importance.png"), dpi=150)
     plt.close(fig)
 
 
@@ -167,7 +189,7 @@ def build_excel(dataset: str, segment_df: pd.DataFrame, feature_df: pd.DataFrame
         feature_df.to_excel(writer, sheet_name="top_features", index=False)
         tenure_df.to_excel(writer, sheet_name="tenure_bands", index=False)
         models.to_excel(writer, sheet_name="model_comparison", index=False)
-        targeting.to_excel(writer, sheet_name="targeting_lift", index=True)
+        targeting.to_excel(writer, sheet_name="targeting_lift", index=False)
         impact.to_excel(writer, sheet_name="business_impact", index=False)
         if surv_rows is not None:
             pd.DataFrame(surv_rows).to_excel(writer,
@@ -191,14 +213,14 @@ def make_figures(dataset: str, paths, top_n: int = 8, results: pd.DataFrame | No
     # raw, not cleaned: clean() replaces Contract / PaymentMethod with integer
     # codes, which is right for a model but illegible in a report.
     seg = churn_by_segment(df, dataset)
-    ten = churn_by_tenure_band(ch, dataset, bins=[0, 12, 24, 36, 48, 60, 72])
+    ten = churn_by_tenure_band(ch, dataset)
     feat = top_features(ch, top_n)
-    churn_segment_chart(seg, dataset, top_n)
-    retention_chart(ten)
-    features_chart(feat)
+    churn_segment_chart(seg, dataset, top_n, paths)
+    retention_chart(ten, dataset, paths)
+    features_chart(feat, paths)
     if results is not None:
-        model_chart(results)
-        importance_chart(results)
+        model_chart(results, paths)
+        importance_chart(results, paths)
 
     # survival analysis -------------------------------------------------
     # NOTE: survival functions take the RAW frame, not the cleaned one.

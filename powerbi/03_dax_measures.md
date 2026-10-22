@@ -54,7 +54,7 @@ VAR ranked =
     TOPN ( K, ALLSELECTED ( dim_customer ), dim_customer[churn_risk_score], DESC )
 RETURN
     DIVIDE (
-        CALCULATE ( COUNTROWS ( dim_customer ), dim_customer[churn]] = 1, ranked ),
+        CALCULATE ( COUNTROWS ( dim_customer ), dim_customer[churn] = 1, ranked ),
         COUNTROWS ( ranked )
     )
 

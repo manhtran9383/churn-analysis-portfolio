@@ -56,7 +56,7 @@ def test_ranking_metrics_match_notebook():
 def test_survival_concordance():
     at = _run_app()
     metrics = {m.label: m.value for m in at.metric}
-    assert metrics["Cox concordance"] == "0.840"
+    assert metrics["Cox concordance"] == "0.844"
 
 
 def test_no_runtime_errors_or_exceptions():

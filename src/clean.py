@@ -61,6 +61,10 @@ def clean(df: pd.DataFrame, dataset: str) -> pd.DataFrame:
     if spec.get("id") and spec["id"] in out.columns:
         out = out.drop(columns=[spec["id"]])
 
+    # --- 4b. drop RowNumber (bank sequential ID, not a feature) -----------
+    if "RowNumber" in out.columns:
+        out = out.drop(columns=["RowNumber"])
+
     # --- 5. yes/no / categorical string columns -> 0/1 / codes -------------
     object_cols = [c for c in out.columns
                    if out[c].dtype == "object"

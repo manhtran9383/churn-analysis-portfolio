@@ -73,17 +73,17 @@ def fit_models_cached(dataset: str, seed: int = 42):
 @st.cache_data(show_spinner="Fitting survival model…")
 def survival_cached(dataset: str):
     """Cache only picklable results (DataFrames / floats), not lifelines objects."""
-    _, df = load(dataset)
-    cph = cox_model(df, dataset)
-    kmf_all = km_overall(df, dataset)
+    raw, _ = load(dataset)
+    cph = cox_model(raw, dataset)
+    kmf_all = km_overall(raw, dataset)
     seg_col = "Contract" if dataset == "telco" else "Geography"
-    curves = km_by_group(df, dataset, seg_col)
+    curves = km_by_group(raw, dataset, seg_col)
     horizon = HORIZONS[dataset][1]
     return {
         "concordance": float(cph.concordance_index_),
         "cox_table": cox_table(cph),
-        "logrank": logrank(df, dataset, seg_col),
-        "surv_prob": risk_score_at(cph, df, dataset, horizon),
+        "logrank": logrank(raw, dataset, seg_col),
+        "surv_prob": risk_score_at(cph, raw, dataset, horizon),
         "horizon": horizon,
         "all_summary": survival_summary(kmf_all, HORIZONS[dataset]),
         "summary": {lab: survival_summary(k, HORIZONS[dataset])
@@ -206,8 +206,9 @@ with tab_surv:
     c1, c2, c3 = st.columns(3)
     c1.metric("Cox concordance", f"{s['concordance']:.3f}")
     med = s["all_summary"].get("median_survival_time")
-    c2.metric("Median survival (all)", "∞ (not reached)" if med is None else f"{med:.0f} mo")
-    c3.metric("Horizon for dynamic ranking", f"{s['horizon']} months")
+    time_unit = "months" if dataset == "telco" else "years"
+    c2.metric("Median survival (all)", "∞ (not reached)" if med is None else f"{med:.0f} {time_unit}")
+    c3.metric(f"Horizon for dynamic ranking", f"{s['horizon']} {time_unit}")
 
     # Kaplan-Meier plot
     fig = go.Figure()
@@ -222,7 +223,7 @@ with tab_surv:
         ))
     fig.update_layout(
         title=f"Kaplan-Meier survival curve — {spec['label']}",
-        xaxis_title="Tenure (months)",
+        xaxis_title=f"Tenure ({time_unit})",
         yaxis_title="Survival probability",
         height=480,
     )

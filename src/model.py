@@ -47,12 +47,15 @@ def _infer_features(df: pd.DataFrame, dataset: str) -> dict:
 
 
 def fit_models(df: pd.DataFrame, dataset: str, seed: int = 42) -> tuple[dict, pd.DataFrame]:
+    from .config import load_config
+    cfg = load_config()
+    test_size = cfg.get("model", {}).get("test_size", 0.20)
     prepared = _infer_features(df, dataset)
     X = prepared["X"][prepared["usable"]]
     y = prepared["y"]
 
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=seed, stratify=y,
+        X, y, test_size=test_size, random_state=seed, stratify=y,
     )
 
     results = []
@@ -62,7 +65,7 @@ def fit_models(df: pd.DataFrame, dataset: str, seed: int = 42) -> tuple[dict, pd
     if prepared["num_cols"]:
         pre.append(("num", StandardScaler(), prepared["num_cols"]))
     if prepared["cat_cols"]:
-        pre.append(("cat", "passthrough"))
+        pre.append(("cat", "passthrough", prepared["cat_cols"]))
     model = Pipeline([
         ("prep", ColumnTransformer(pre, remainder="drop", sparse_threshold=0)),
         ("clf", LogisticRegression(max_iter=2000, C=0.5, class_weight="balanced")),

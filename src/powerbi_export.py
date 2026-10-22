@@ -31,7 +31,7 @@ import pandas as pd
 
 from .analysis import churn_by_segment, churn_by_tenure_band
 from .clean import clean
-from .config import DATASETS, Paths
+from .config import DATASETS, Paths, TENURE_BINS, TENURE_LABELS
 from .impact import revenue_at_risk, risk_score, targeting_lift
 from .load_data import load_raw
 from .model import fit_models
@@ -44,11 +44,6 @@ from .survival import (
     risk_score_at,
     survival_summary,
 )
-
-# The churn "time" axis is tenure, not calendar time. A calendar dim_date would
-# be empty here, so the date-table analogue is a tenure dimension.
-TENURE_BINS = [0, 12, 24, 36, 48, 60, 72]
-TENURE_LABELS = ["0-12", "12-24", "24-36", "36-48", "48-60", "60-72"]
 
 
 def _write(df: pd.DataFrame, path: Path) -> int:
@@ -81,8 +76,10 @@ def _dim_customer(raw: pd.DataFrame, dataset: str, models, cph) -> pd.DataFrame:
     dim["churn_label"] = np.where(dim["churn"] == 1, "Churned", "Active")
     dim["churn_risk_score"] = risked["churn_risk"].values
     dim["surv_prob_at_horizon"] = surv.reindex(dim.index).values
+    bins = TENURE_BINS[dataset]
+    labels = TENURE_LABELS[dataset]
     dim["tenure_band"] = pd.cut(
-        dim[spec["tenure"]], bins=TENURE_BINS, labels=TENURE_LABELS, right=False
+        dim[spec["tenure"]], bins=bins, labels=labels, right=False
     ).astype(str)
     return dim
 
@@ -91,7 +88,9 @@ def _dim_tenure(df: pd.DataFrame, dataset: str) -> pd.DataFrame:
     """Tenure dimension: month -> band, with churn rate and survival prob."""
     spec = DATASETS[dataset]
     t = pd.to_numeric(df[spec["tenure"]], errors="coerce")
-    band = pd.cut(t, bins=TENURE_BINS, labels=TENURE_LABELS, right=False)
+    bins = TENURE_BINS[dataset]
+    labels = TENURE_LABELS[dataset]
+    band = pd.cut(t, bins=bins, labels=labels, right=False)
     per_month = (
         pd.DataFrame({"tenure_month": t, "tenure_band": band, "churn": df["churn"]})
         .dropna(subset=["tenure_month"])
@@ -154,7 +153,7 @@ def run(paths: Paths | None = None, dataset: str = "telco") -> dict:
         churn_by_segment(raw, dataset), out / "kpi_churn_by_segment.csv"
     )
     counts["kpi_tenure_bands"] = _write(
-        churn_by_tenure_band(df, dataset, bins=TENURE_BINS),
+        churn_by_tenure_band(df, dataset, bins=TENURE_BINS[dataset]),
         out / "kpi_tenure_bands.csv",
     )
 
@@ -184,13 +183,13 @@ def run(paths: Paths | None = None, dataset: str = "telco") -> dict:
     counts["kpi_cox_hazards"] = _write(cox, out / "kpi_cox_hazards.csv")
 
     # business impact
+    risked = risk_score(df, dataset, models["logistic"])
     counts["kpi_business_impact"] = _write(
-        pd.DataFrame([revenue_at_risk(df, dataset, models["logistic"], cap=500)]),
+        pd.DataFrame([revenue_at_risk(risked, dataset, models["logistic"], cap=500)]),
         out / "kpi_business_impact.csv",
     )
     counts["kpi_targeting_lift"] = _write(
-        targeting_lift(risk_score(df, dataset, models["logistic"]),
-                       models["logistic"], cap=500),
+        targeting_lift(risked, cap=500),
         out / "kpi_targeting_lift.csv",
     )
 

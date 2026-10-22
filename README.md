@@ -12,11 +12,11 @@ manager an auditable, end-to-end analysis — raw data → insight → model →
   month's charge, so `TotalCharges ≈ MonthlyCharges × tenure` holds. This is a
   textbook "trap" and it is handled and documented rather than ignored.
 * **Segment → model → money.** Churn by segment, a retention curve by tenure,
-  logistic + gradient-boosting baselines, calibrated probabilities used to rank
-  the top-500 at-risk customers, and the revenue `at risk`.
+  logistic + gradient-boosting baselines, class-weighted probability scores used
+  to rank the top-500 at-risk customers, and the revenue `at risk`.
 * **Survival analysis — when, not just if.** Right-censored Kaplan-Meier curves
-  by segment + Cox proportional-hazards model with concordance 0.84 (telco) /
-  0.71 (bank). Log-rank tests confirm Contract / Geography drive *when* churn
+  by segment + Cox proportional-hazards model with concordance 0.844 (telco) /
+  0.720 (bank). Log-rank tests confirm Contract / Geography drive *when* churn
   happens. Median survival, survival-at-horizon (6/12/24/36/48/60/72 months),
   and per-customer survival probabilities at 12 months for dynamic ranking.
 * **Reproducible.** One command, a fixed `random_state`, and a `data/raw/` registry.
@@ -57,7 +57,7 @@ churn-project/
 │   │                          #    targeting, business impact, survival_summary, surv_cox
 │   └── figures/                # 6 PNGs (segment bar, retention curve, top
 │                                #    features, logistic importance, model cmp, survival curve)
-├── powerbi/                    # Power BI build pack: 10 CSVs + M code + DAX + layout
+├── powerbi/                    # Power BI build pack: 10 CSVs per dataset + M code + DAX + layout
 └── notebooks/                  # executed Jupyter notebooks (0 error cells)
 ```
 
@@ -65,8 +65,8 @@ churn-project/
 
 | Dataset        | Churn rate | Best model (ROC / PR) | Top segment (driver)        | 500 riskers | Survival concordance |
 |----------------|-----------|------------------------|-----------------------------|-------------|----------------------|
-| Telecom Telco  | 26.54 %   | GradientBoosting 0.844 / 0.663 | Electronic check (45.3%) | ≈ 43 246 $/mo | 0.84 |
-| Bank           | 20.37 %   | GradientBoosting 0.867 / 0.714 | Germany (32.4%) | n/a (no revenue col) | 0.71 |
+| Telecom Telco  | 26.54 %   | GradientBoosting 0.844 / 0.663 | Electronic check (45.3%) | ≈ 43 246 $/mo | 0.844 |
+| Bank           | 20.37 %   | GradientBoosting 0.867 / 0.714 | Germany (32.4%) | n/a (no revenue col) | 0.720 |
 
 ## Portfolio notes for the conversation with a recruiter
 
@@ -78,12 +78,13 @@ churn-project/
    customer leaves is more impressive than just predicting it — hence the
    `feature_importance` and `risk_score` outputs.
 3. **Business impact, not just metrics.** `targeting_lift` shows that serving
-   the top-500 riskers concentrates ~3× the churn rate of the base; the
-   `revenue_at_risk` quantifies what retention work is actually worth.
+   the top-500 riskers concentrates ~2× the churn rate of the base (measured on
+   the hold-out test set); the `revenue_at_risk` quantifies what retention work
+   is actually worth.
 4. **Survival analysis answers "when", not just "if".** Classification ignores
    censored customers (still active at snapshot). Kaplan-Meier + Cox PH model
    right-censoring correctly: `churn=1` = event observed, `churn=0` = censored.
-   Concordance 0.84/0.71 proves the model orders customers by time-to-churn.
+   Concordance 0.844/0.720 proves the model orders customers by time-to-churn.
    Per-customer survival probability at 12 months enables a *dynamic* retention
    ranking — who will leave *soonest*.
 5. **Every number is re-runnable.** `data/raw/` and `config.yaml` are the only
@@ -94,4 +95,6 @@ churn-project/
 * `config.yaml` → `dataset.name` switches both datasets.
 * `src/config.py` `DATASETS` is the single registry: file, target column, positive
   label, numeric/segment/service columns per dataset.
-* `tests/` (optional) runs the whole pipeline in an isolated copy of the project.
+* `tests/` runs 5 headless Streamlit smoke tests (`streamlit.testing.v1.AppTest`)
+  that assert the app renders, the tabs exist, and the ranking/survival metrics
+  match the pipeline output.
