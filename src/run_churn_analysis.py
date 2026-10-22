@@ -118,11 +118,16 @@ def run(dataset: str = "telco"):
         print(f"Top-{cap} riskers: {customers} customers; "
               f"revenue at risk: n/a (no monthly revenue column; in-sample estimate)")
     # Honest lift on HOLD-OUT test set (no in-sample leakage)
-    # Use the requested cap if present, else the largest available list size.
+    # Use the requested cap if present, else the largest natural slice that is
+    # STRICTLY smaller than the test size, so the headline "lift" is always a
+    # real, interpretable slice -- never the baseline 100 % row.
     mask = tl["list_size"] == cap
     if not mask.any():
-        # cap not present (test set smaller than cap) -> use max available
-        cap = int(tl["list_size"].max())
+        candidates = tl[tl["list_size"] < len(risked_test)]
+        if not candidates.empty:
+            cap = int(candidates["list_size"].max())
+        else:
+            cap = 500
         mask = tl["list_size"] == cap
     precision = tl.loc[mask, "churn_rate_pct"].values[0]
     base_rate = prof["churn_rate"]

@@ -9,8 +9,11 @@ manager an auditable, end-to-end analysis — raw data → insight → model →
 
 * **Data quality first.** The telecom `TotalCharges` is a *text* column with 11
   blanks (customers with `tenure = 0`). Those blanks are filled with the first
-  month's charge, so `TotalCharges ≈ MonthlyCharges × tenure` holds. This is a
-  textbook "trap" and it is handled and documented rather than ignored.
+  month's charge, so `TotalCharges ≈ MonthlyCharges × tenure` holds for tenure > 0
+  — the only case a retention analyst actually uses. The zero-tenure blanks are a
+  data-quality trap: filled with the first month's charge they make `TotalCharges`
+  equal to `MonthlyCharges` (i.e. tenure 1), a hidden assumption this project
+  documents and tests rather than ignores.
 * **Segment → model → money.** Churn by segment, a retention curve by tenure,
   logistic + gradient-boosting baselines, class-weighted probability scores used
   to rank the top-500 at-risk customers, and the revenue `at risk`.

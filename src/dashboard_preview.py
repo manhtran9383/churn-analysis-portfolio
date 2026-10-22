@@ -100,49 +100,23 @@ def _figure_paths(paths: Paths, dataset: str) -> Path:
 
 
 def _regenerate_figures(paths: Paths, dataset: str) -> None:
-    """Generate the 6 review figures for THIS dataset into a dataset folder
-    (mirroring ``report.make_figures``), then reuse them in build_html."""
-    import matplotlib
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
-    from src.config import DATASETS
-    from src.analysis import churn_by_segment, top_features, churn_by_tenure_band
+    """Generate the 6 review figures for THIS dataset into powerbi/data/<dataset>/figures
+    (via the shared report.render_figures) and reuse them in build_html."""
     from src.clean import clean
     from src.load_data import load_raw
     from src.model import fit_models
-    from src.report import (churn_segment_chart, retention_chart, features_chart,
-                             model_chart, importance_chart)
-    from src.survival import cox_model, HORIZONS, km_by_group, km_overall, cox_table
-    from src.report import survival_chart
+    from src.report import render_figures
 
-    spec = DATASETS[dataset]
+    fig_dir = _figure_paths(paths, dataset)
     raw = load_raw(paths, dataset)
-    df = clean(raw, dataset)
+    cleaned = clean(raw, dataset)
+    models, results = fit_models(cleaned, dataset, seed=42)
+    render_figures(dataset, raw, cleaned, results, fig_dir)
 
-    # ---- segment bar ----
-    seg = churn_by_segment(raw, dataset)
-    churn_segment_chart(seg, dataset, top_n=8, paths=paths)
-
-    # ---- retention ----
-    ten = churn_by_tenure_band(df, dataset)
-    retention_chart(ten, dataset, paths)
-
-    # ---- top numeric features ----
-    feat = top_features(df, top_n=8)
-    features_chart(feat, paths)
-
-    # ---- model comparison + importance ----
-    models, results = fit_models(df, dataset, seed=42)
-    model_chart(results, paths)
-    importance_chart(results, paths)
-
-    # ---- survival ----
-    cph = cox_model(raw, dataset)
-    surv_rows = survival_chart(dataset, raw, paths)
-    surv_cox = cox_table(cph)
-
-    # NOTE: this only regenerates the 6 named charts. If you add more figures
-    # in report.py, mirror them here so the preview always matches the dataset.
+    # Live-assert the deliverable is fixed: every figure must be a real PNG
+    # written into the dataset figures folder (no dead <img src=''>).
+    n_png = len(list(fig_dir.glob("*.png")))
+    assert n_png == 6, f"preview for {dataset} emitted {n_png} figures, expected 6"
 
 
 def _read(paths: Paths, dataset: str, name: str) -> pd.DataFrame | None:

@@ -43,3 +43,42 @@ jobs:
             reports/Churn_Analysis.xlsx
             reports/figures/
           retention-days: 30
+
+  check-powerbi-preview:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        dataset: [telco, bank, hr]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Build powerbi pack
+        run: python -m src.run_churn_analysis --dataset ${{ matrix.dataset }} --stage powerbi
+
+      - name: Build preview HTML
+        run: python -m src.run_churn_analysis --dataset ${{ matrix.dataset }} --stage preview
+
+      - name: Assert 6 embedded figures per preview
+        run: |
+          python - <<'EOF'
+          import sys
+          for ds in ["telco", "bank", "hr"]:
+              f = f"powerbi/dashboard_preview_{ds}.html"
+              html = open(f, encoding="utf-8").read()
+              n = html.count("data:image/png;base64")
+              if n != 6:
+                  raise SystemExit(f"{ds}: {n} base64 images in preview, expected 6")
+          print("preview figures OK (6 base64 PNG per dataset)")
+          EOF

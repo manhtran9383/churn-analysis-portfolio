@@ -16,7 +16,7 @@
 //   powerbi/data/<dataset>/dim_customer.csv
 // (telco = customerID / Contract / InternetService / PaymentMethod /
 //  MonthlyCharges / TotalCharges ;  bank = CustomerId / Geography /
-//  Tenure / AnnualIncome ;  hr  = EmployeeNumber / Department /
+//  Tenure / EstimatedSalary ;  hr  = EmployeeNumber / Department /
 //  OverTime / MonthlyIncome).
 //
 // Build for any dataset with:

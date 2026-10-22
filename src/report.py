@@ -95,7 +95,7 @@ def retention_chart(df_ten: pd.DataFrame, dataset: str, paths: Paths = None,
                     fontsize=8, color="#888", style="italic")
     ax.set_xlabel(f"Tenure band ({time_unit})", color="#444444")
     ax.set_ylabel("Churn rate (%)", color="#444444")
-    ax.set_title("Retention curve - churn falls sharply with tenure (>=3/mo shown)",
+    ax.set_title("Retention curve - churn falls sharply with tenure (>=3 per band shown)",
                  color="#1a1a1a")
     _style_ax(ax)
     fig.tight_layout()
@@ -227,27 +227,40 @@ def build_excel(dataset: str, segment_df: pd.DataFrame, feature_df: pd.DataFrame
     return str(outp)
 
 
-def make_figures(dataset: str, paths, top_n: int = 8, results: pd.DataFrame | None = None):
-    """Generate every figure, one per output slot."""
-    from .load_data import load_raw
-    from .analysis import churn_by_segment, churn_by_tenure_band, top_features
-    from .clean import clean
-    from .report import (churn_segment_chart, retention_chart, features_chart,
-                         model_chart, importance_chart)
+class _FigDir:
+    """Minimal stand-in for ``Paths``: the chart helpers only use
+    ``paths.figures``. Lets any caller direct the output to an arbitrary folder
+    (the pipeline uses ``reports/figures``, the preview uses a dataset folder)."""
 
-    df = load_raw(paths, dataset)
-    ch = clean(df, dataset)
+    def __init__(self, figures: Path):
+        self.figures = figures
+
+
+def render_figures(dataset: str, raw: pd.DataFrame, cleaned: pd.DataFrame,
+                   results: pd.DataFrame | None, fig_dir: Path,
+                   top_n: int = 8):
+    """Render the 6 report figures into ``fig_dir``.
+
+    Shared by the pipeline (``make_figures``) and the dashboard preview, so the
+    two can never drift apart.
+    """
+    from .analysis import churn_by_segment, churn_by_tenure_band, top_features
+    from .survival import cox_model, cox_table
+
+    fig_dir.mkdir(parents=True, exist_ok=True)
+    fp = _FigDir(fig_dir)
+
     # raw, not cleaned: clean() replaces Contract / PaymentMethod with integer
     # codes, which is right for a model but illegible in a report.
-    seg = churn_by_segment(df, dataset)
-    ten = churn_by_tenure_band(ch, dataset)
-    feat = top_features(ch, top_n)
-    churn_segment_chart(seg, dataset, top_n, paths)
-    retention_chart(ten, dataset, paths)
-    features_chart(feat, paths)
+    seg = churn_by_segment(raw, dataset)
+    ten = churn_by_tenure_band(cleaned, dataset)
+    feat = top_features(cleaned, top_n)
+    churn_segment_chart(seg, dataset, top_n, fp)
+    retention_chart(ten, dataset, fp)
+    features_chart(feat, fp)
     if results is not None:
-        model_chart(results, paths)
-        importance_chart(results, paths)
+        model_chart(results, fp)
+        importance_chart(results, fp)
 
     # survival analysis -------------------------------------------------
     # NOTE: survival functions take the RAW frame, not the cleaned one.
@@ -255,10 +268,22 @@ def make_figures(dataset: str, paths, top_n: int = 8, results: pd.DataFrame | No
     # would make the Cox model treat them as ordinal and would render the KM
     # segment labels as 0/1/2. Raw keeps the labels and lets _cox_frame()
     # one-hot encode the categoricals properly.
-    from .survival import cox_model, cox_table
-    cph = cox_model(df, dataset)
-    surv_rows = survival_chart(dataset, df, paths)
+    cph = cox_model(raw, dataset)
+    surv_rows = survival_chart(dataset, raw, fp)
     surv_cox = cox_table(cph)
+    return seg, ten, feat, surv_rows, surv_cox, cph
+
+
+def make_figures(dataset: str, paths, top_n: int = 8, results: pd.DataFrame | None = None):
+    """Generate every figure, one per output slot."""
+    from .load_data import load_raw
+    from .clean import clean
+
+    raw = load_raw(paths, dataset)
+    cleaned = clean(raw, dataset)
+    seg, ten, feat, surv_rows, surv_cox, cph = render_figures(
+        dataset, raw, cleaned, results, paths.figures, top_n
+    )
     conc = cph.concordance_index_
     print(f"Survival (Cox PH): concordance = {conc:.3f}")
 

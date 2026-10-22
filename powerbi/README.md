@@ -15,7 +15,7 @@ python -m src.run_churn_analysis --dataset bank --stage preview     # bank previ
 
 | File | Purpose |
 |---|---|
-| `data/<dataset>/` | **10 CSV files** — the data pack for one dataset (see list below) |
+| `data/<dataset>/` | **9 CSV files** — the data pack for one dataset (see list below) |
 | `01_power_query.m` | Copy-paste M code blocks (one per table) for Power Query |
 | `02_data_model.md` | Star-schema diagram, relationships, grain, column dictionary |
 | `03_dax_measures.md` | 18 ready-to-paste DAX measures with formatting notes |
@@ -23,7 +23,7 @@ python -m src.run_churn_analysis --dataset bank --stage preview     # bank previ
 | `connection.txt` | Exact import steps for CSV vs Excel |
 | `dashboard_preview_<dataset>.html` | Self-contained browser preview (base64 PNGs) |
 
-## Data pack — 10 CSV files (per dataset)
+## Data pack — 9 CSV files (per dataset)
 
 The 10 files below are produced for **either** `telco` or `bank` and land
 under `powerbi/data/<dataset>/`.

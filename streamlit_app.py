@@ -142,7 +142,9 @@ with tab_rank:
     y_true = y_te.values
     base_rate = y_true.mean()
 
-    k = st.slider("K — customers called first", 50, 1000, 500, 50)
+    k = min(int(st.slider("K — customers called first", 50, 1000, 500, 50)),
+            int(len(y_true)))
+    k_used = k
     idx = np.argsort(-proba)[:k]
     recall = y_true[idx].sum() / max(y_true.sum(), 1)
     precision = y_true[idx].mean()
@@ -153,6 +155,8 @@ with tab_rank:
     c2.metric("Precision@K", f"{precision:.1%}")
     c3.metric("Base rate", f"{base_rate:.1%}")
     c4.metric("Lift", f"{lift:.2f}×")
+    if k < 500:
+        st.caption(f"K auto-clamped to {k_used} (test set has {len(y_true)} rows)")
 
     ks = [50, 100, 200, 500, 1000]
     curve = pd.DataFrame([

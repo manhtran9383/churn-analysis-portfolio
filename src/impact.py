@@ -85,6 +85,10 @@ def targeting_lift(df: pd.DataFrame, cap: int | None = None) -> pd.DataFrame:
         })
         out = pd.DataFrame(rows)
         out["lift_vs_all_pp"] = (out["churn_rate_pct"] - base_rate).round(2)
+
+    # always emit a sorted CSV: natural sizes ascending, and the optional cap
+    # row (if added) moves to the end, not wedged between natural sizes.
+    out = out.sort_values("list_size").reset_index(drop=True)
     return out
 
 
