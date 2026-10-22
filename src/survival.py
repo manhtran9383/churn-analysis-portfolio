@@ -50,19 +50,25 @@ from .config import DATASETS
 
 # Covariates for the Cox model, per dataset. TotalCharges is deliberately
 # absent for telco (it is a function of the time variable -- see module docstring).
+# Covariates for the Cox model, per dataset.
+#
+# HR note (REVIEW N1): time-cumulative quantities (TotalWorkingYears,
+# YearsInCurrentRole, YearsSinceLastPromotion, YearsWithCurrManager,
+# NumCompaniesWorked) are measured at exit and bounded by the duration
+# themselves, so they leak look-ahead information and inflate concordance.
+#   - with all of them: 0.937 (inflated)
+#   - baseline-only: 0.860
+# The README "honor roll" therefore quotes 0.860.
 COX_COVARIATES = {
     "telco": ["MonthlyCharges", "Contract", "InternetService", "PaymentMethod",
               "gender", "SeniorCitizen", "Partner", "Dependents",
               "PaperlessBilling", "OnlineSecurity", "TechSupport"],
     "bank": ["CreditScore", "Age", "Balance", "NumOfProducts",
-             "IsActiveMember", "HasCrCard", "EstimatedSalary",
-             "Geography", "Gender"],
+             "IsActiveMember", "HasCrCard", "EstimatedSalary", "Geography", "Gender"],
     "hr": ["Age", "MonthlyIncome", "Department", "JobRole", "BusinessTravel",
            "OverTime", "MaritalStatus", "Gender", "JobSatisfaction",
            "EnvironmentSatisfaction", "WorkLifeBalance", "JobInvolvement",
-           "TotalWorkingYears", "YearsInCurrentRole", "YearsSinceLastPromotion",
-           "YearsWithCurrManager", "NumCompaniesWorked", "StockOptionLevel",
-           "PercentSalaryHike", "DistanceFromHome", "JobLevel"],
+           "StockOptionLevel", "PercentSalaryHike", "DistanceFromHome", "JobLevel"],
 }
 
 # Horizons (in the dataset's time unit) at which survival is reported.

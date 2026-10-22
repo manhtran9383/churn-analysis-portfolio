@@ -8,9 +8,19 @@
 //   2. Edit the file path in Csv.Document(...) to your machine.
 //   3. Repeat for each table, then apply 02_data_model.md.
 //
-// Column types below were generated from the actual CSV headers, so they
-// match the data pack written by:
-//   python -m src.run_churn_analysis --dataset telco --stage powerbi
+// Column types below were generated from the actual CSV headers of the
+// TELCO data pack. The M code is a template: the table names, the M shape
+// and every join/filter are dataset-agnostic, but the column TYPES in each
+// TransformColumnTypes(...) block must be edited to the real CSV headers of
+// the target dataset, which you can read from
+//   powerbi/data/<dataset>/dim_customer.csv
+// (telco = customerID / Contract / InternetService / PaymentMethod /
+//  MonthlyCharges / TotalCharges ;  bank = CustomerId / Geography /
+//  Tenure / AnnualIncome ;  hr  = EmployeeNumber / Department /
+//  OverTime / MonthlyIncome).
+//
+// Build for any dataset with:
+//   python -m src.run_churn_analysis --dataset <dataset> --stage powerbi
 // =====================================================================
 
 // ---- dim_customer --------------------------------------------------------

@@ -85,7 +85,7 @@ DATASETS = {
         "positive": "Yes",
         "id": "EmployeeNumber",
         "tenure": "YearsAtCompany",
-        "monthly_revenue": "MonthlyIncome",
+        "monthly_revenue": None,
         "total_revenue": None,
         "currency": "USD",
         "segments": ["Department", "JobRole", "BusinessTravel", "OverTime",

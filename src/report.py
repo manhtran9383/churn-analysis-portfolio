@@ -59,17 +59,44 @@ def churn_segment_chart(df_seg: pd.DataFrame, dataset: str, top_n: int = 8, path
     plt.close(fig)
 
 
-def retention_chart(df_ten: pd.DataFrame, dataset: str, paths: Paths = None):
+def retention_chart(df_ten: pd.DataFrame, dataset: str, paths: Paths = None,
+                    min_count: int = 3):
+    """Retention curve by tenure band.
+
+    Bands with fewer than ``min_count`` customers are excluded from the line
+    (they are too noisy, e.g. HR 40-45 has n=1) and annotated. The Excel
+    workbook keeps the full set.
+    """
     spec = DATASETS[dataset]
     time_unit = spec.get("time_unit", "months")
+    counts = df_ten["count"]
+    keep = counts >= min_count
     rates = df_ten["churn_rate"] * 100
+
     fig, ax = plt.subplots(figsize=(8, 4.5))
-    ax.plot(df_ten["tenure_band"].astype(str), rates, marker="o", color="#d9534f")
-    ax.fill_between(df_ten["tenure_band"].astype(str), 0, rates,
-                    color="#d9534f", alpha=0.12)
+    if keep.any():
+        ax.plot(
+            df_ten.loc[keep, "tenure_band"].astype(str),
+            rates[keep.values], marker="o", color="#d9534f",
+        )
+        ax.fill_between(
+            df_ten.loc[keep, "tenure_band"].astype(str), 0,
+            rates[keep.values], color="#d9534f", alpha=0.12,
+        )
+    # annotate excluded noisy bands
+    excl = ~keep
+    if excl.any():
+        labels = [
+            f"{b} (n={int(c)})"
+            for b, c in zip(df_ten.loc[excl, "tenure_band"],
+                            df_ten.loc[excl, "count"])
+        ]
+        ax.annotate(", ".join(labels), xy=(0.02, 0.02), xycoords="axes fraction",
+                    fontsize=8, color="#888", style="italic")
     ax.set_xlabel(f"Tenure band ({time_unit})", color="#444444")
     ax.set_ylabel("Churn rate (%)", color="#444444")
-    ax.set_title("Retention curve - churn falls sharply with tenure", color="#1a1a1a")
+    ax.set_title("Retention curve - churn falls sharply with tenure (>=3/mo shown)",
+                 color="#1a1a1a")
     _style_ax(ax)
     fig.tight_layout()
     if paths:

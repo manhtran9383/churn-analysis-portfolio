@@ -36,6 +36,12 @@ Both run in ~30 s on a laptop.
 
 ### Human resources (HR) — streamlined 1-pager
 
+> Model-source: HR impact figures below are **logistic on the hold-out test set**;
+> the app's "Lift" uses **gradient-boosting** on the test set. Don't mix the two
+> when quoting. (telco/bank: logistic 2.02×/2.19×; GB 2.07×/2.84×.)
+
+
+
 The HR dataset (`HR_Employee_Attrition.csv`, 1,470 employees, 16.1% attrition) is a
 single-command portfolio slice aimed at a **people analytics / HR** audience:
 
@@ -61,7 +67,7 @@ What the HR run surfaces — no extra modelling code needed beyond the shared pi
   `Over18`, `StandardHours` (zero-variance columns) are auto-dropped; `JobRole`,
   `Department`, `BusinessTravel`, `OverTime`, `MaritalStatus`, `Gender`,
   `EducationField` are one-hot encoded for the models.
-- **Honor roll**: Cox concordance 0.937 (HR) vs 0.844 (telco) vs 0.720 (bank).
+- **Honor roll**: Cox concordance 0.860 (HR, baseline-only) vs 0.844 (telco) vs 0.720 (bank). The earlier 0.937 included time-cumulative covariates (look-ahead) — see §N1.
 
 This differs from the two revenue datasets in one deliberate way: the "cost" of attrition is
 not a monthly revenue number, so the impact sheet reports churn-concentration metrics
@@ -101,7 +107,8 @@ churn-project/
 |----------------|-----------|------------------------|-----------------------------|-------------|----------------------|
 | Telecom Telco  | 26.54 %   | GradientBoosting 0.844 / 0.663 | Electronic check (45.3%) | ≈ 43 246 $/mo | 0.844 |
 | Bank           | 20.37 %   | GradientBoosting 0.867 / 0.714 | Germany (32.4%) | n/a (no revenue col) | 0.720 |
-| HR (IBM Attrition) | 16.12 % | Logistic 0.818 / 0.622 | Sales Representative (39.8%) | n/a (no revenue col) | 0.937 |
+| HR (IBM Attrition) | 16.12 % | Logistic 0.818 / 0.622 | Sales Representative (39.8%) | n/a (no revenue col) | 0.860 |
+| HR Cox covariates | time-cumulative excluded | baseline-only; 0.937 was look-ahead-inflated (see N1) |
 
 ## Portfolio notes for the conversation with a recruiter
 

@@ -76,7 +76,7 @@ def survival_cached(dataset: str):
     raw, _ = load(dataset)
     cph = cox_model(raw, dataset)
     kmf_all = km_overall(raw, dataset)
-    seg_col = "Contract" if dataset == "telco" else "Geography"
+    seg_col = spec.get("survival_segment", "Department")
     curves = km_by_group(raw, dataset, seg_col)
     horizon = HORIZONS[dataset][1]
     return {
@@ -101,7 +101,7 @@ with st.sidebar:
     st.title("📊 Churn as a Ranking System")
     st.caption("Interactive demo of `notebooks/churn_ai_llm_reframing.ipynb`")
     dataset = st.selectbox(
-        "Dataset", ["telco", "bank"],
+        "Dataset", ["telco", "bank", "hr"],
         format_func=lambda d: DATASETS[d]["label"],
     )
     st.divider()

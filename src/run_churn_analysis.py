@@ -109,17 +109,25 @@ def run(dataset: str = "telco"):
     ra = imp["revenue_at_risk"]
     has_monthly = pd.notna(ra)
     ra_str = f"{ra:,.0f}" if has_monthly else "n/a"
+    cap = 500
+    customers = int(imp["customers_at_risk"])
     if has_monthly:
-        print(f"Top-500 riskers: {int(imp['customers_at_risk'])} customers; "
+        print(f"Top-{cap} riskers: {customers} customers; "
               f"revenue at risk: {ra_str}/month (in-sample estimate)")
     else:
-        print(f"Top-500 riskers: {int(imp['customers_at_risk'])} customers; "
+        print(f"Top-{cap} riskers: {customers} customers; "
               f"revenue at risk: n/a (no monthly revenue column; in-sample estimate)")
     # Honest lift on HOLD-OUT test set (no in-sample leakage)
-    precision = tl[tl["list_size"] == 500]["churn_rate_pct"].values[0]
+    # Use the requested cap if present, else the largest available list size.
+    mask = tl["list_size"] == cap
+    if not mask.any():
+        # cap not present (test set smaller than cap) -> use max available
+        cap = int(tl["list_size"].max())
+        mask = tl["list_size"] == cap
+    precision = tl.loc[mask, "churn_rate_pct"].values[0]
     base_rate = prof["churn_rate"]
     lift = precision / base_rate
-    print(f"Honest lift (test set): top-500 precision {precision:.1f}% "
+    print(f"Honest lift (test set): top-{cap} precision {precision:.1f}% "
           f"({lift:.2f}× base rate {base_rate:.2f}%)")
     print(f"\nSurvival (Cox PH): concordance = {conc:.3f}")
     print(f"\nOutputs: {paths.figures} | {excel_path}")

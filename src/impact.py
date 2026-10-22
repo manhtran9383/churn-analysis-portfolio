@@ -28,15 +28,23 @@ def risk_score(df: pd.DataFrame, dataset: str, model) -> pd.DataFrame:
     return out
 
 
-def targeting_lift(df: pd.DataFrame, cap: int = None) -> pd.DataFrame:
-    """Churn-rate of the top-`cap` riskers vs the rest of the base."""
+def targeting_lift(df: pd.DataFrame, cap: int | None = None) -> pd.DataFrame:
+    """Churn-rate of the top-`cap` riskers vs the rest of the base.
+
+    Keeps the natural sizes of the base (test set) exactly as produced by the
+    pipeline: 2 %, 5 %, 10 %, 20 %, 50 % and 100 % (baseline). No clamping and no
+    padded row, so the CSV is always 1:1 with the underlying data.
+
+    The optional ``cap`` appears only once, and only when it is a real slice of
+    the base (cap <= n) and has not already a natural size there, so telco and
+    bank each emit a single, clean 500 row. No duplicate rows and no fabricated
+    "top-500" row when the test set is smaller than cap.
+    """
     df = df.sort_values("churn_risk", ascending=False).reset_index(drop=True)
     n = len(df)
     rows = []
-    for size in [0.02, 0.05, 0.10, 0.20, 0.5, 1.0]:
-        m = min(int(size * n), n)
-        if cap is not None:
-            m = min(m, cap)
+    for size in [0.02, 0.05, 0.10, 0.20, 0.5]:
+        m = int(size * n)
         mask = pd.Series(True, index=df.index)
         if m < n:
             mask.iloc[m:] = False
@@ -48,14 +56,24 @@ def targeting_lift(df: pd.DataFrame, cap: int = None) -> pd.DataFrame:
             "churn_rate_pct": round(float(seg["churn"].mean()) * 100, 2),
             "avg_risk": round(float(seg["churn_risk"].mean()), 4),
         })
+    # baseline = whole base, 100 % of customers
+    seg = df
+    rows.append({
+        "list_size": n,
+        "churners": int(seg["churn"].sum()),
+        "customers": int(len(seg)),
+        "churn_rate_pct": round(float(seg["churn"].mean()) * 100, 2),
+        "avg_risk": round(float(seg["churn_risk"].mean()), 4),
+    })
     out = pd.DataFrame(rows)
     base_rate = float(df["churn"].mean()) * 100
     out["lift_vs_all_pp"] = (out["churn_rate_pct"] - base_rate).round(2)
-    # Always include the requested cap as a row so consumers can always find
-    # "top-500" (or whatever cap was asked for), even if the test set is smaller.
-    if cap is not None and not any(r["list_size"] == cap for r in rows) and cap > 0:
+
+    # optional real cap slice: only when cap <= n (a genuine slice) and not
+    # already present as a natural size.
+    if cap is not None and cap > 0 and cap <= n and not any(r["list_size"] == cap for r in rows):
         mask = pd.Series(True, index=df.index)
-        if cap < len(df):
+        if cap < n:
             mask.iloc[cap:] = False
         seg = df[mask]
         rows.append({
@@ -64,11 +82,9 @@ def targeting_lift(df: pd.DataFrame, cap: int = None) -> pd.DataFrame:
             "customers": int(len(seg)),
             "churn_rate_pct": round(float(seg["churn"].mean()) * 100, 2),
             "avg_risk": round(float(seg["churn_risk"].mean()), 4),
-            "lift_vs_all_pp": round(
-                float(seg["churn"].mean() * 100) - base_rate, 2),
         })
-    out = pd.DataFrame(rows)
-    out["lift_vs_all_pp"] = (out["churn_rate_pct"] - base_rate).round(2)
+        out = pd.DataFrame(rows)
+        out["lift_vs_all_pp"] = (out["churn_rate_pct"] - base_rate).round(2)
     return out
 
 

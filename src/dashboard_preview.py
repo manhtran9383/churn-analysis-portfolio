@@ -29,8 +29,10 @@ FIGURES = [
 ]
 
 
-def _img64(paths: Paths, name: str) -> str:
-    src = paths.figures / name
+def _img64(paths: Paths, dataset: str, name: str) -> str:
+    # Always read from THIS dataset's regenerated figures folder, so the
+    # preview can never show figures of a different dataset.
+    src = _figure_paths(paths, dataset) / name
     if not src.exists():
         return ""
     return "data:image/png;base64," + base64.b64encode(src.read_bytes()).decode()
@@ -90,6 +92,59 @@ footer { padding:14px 26px; font-size:11px; color:var(--muted); }
 """
 
 
+@staticmethod
+def _figure_paths(paths: Paths, dataset: str) -> Path:
+    """Figures are written per-dataset so a preview for dataset A is never
+    polluted by figures from a previous full-run for dataset B."""
+    return paths.root / "powerbi" / "data" / dataset / "figures"
+
+
+def _regenerate_figures(paths: Paths, dataset: str) -> None:
+    """Generate the 6 review figures for THIS dataset into a dataset folder
+    (mirroring ``report.make_figures``), then reuse them in build_html."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from src.config import DATASETS
+    from src.analysis import churn_by_segment, top_features, churn_by_tenure_band
+    from src.clean import clean
+    from src.load_data import load_raw
+    from src.model import fit_models
+    from src.report import (churn_segment_chart, retention_chart, features_chart,
+                             model_chart, importance_chart)
+    from src.survival import cox_model, HORIZONS, km_by_group, km_overall, cox_table
+    from src.report import survival_chart
+
+    spec = DATASETS[dataset]
+    raw = load_raw(paths, dataset)
+    df = clean(raw, dataset)
+
+    # ---- segment bar ----
+    seg = churn_by_segment(raw, dataset)
+    churn_segment_chart(seg, dataset, top_n=8, paths=paths)
+
+    # ---- retention ----
+    ten = churn_by_tenure_band(df, dataset)
+    retention_chart(ten, dataset, paths)
+
+    # ---- top numeric features ----
+    feat = top_features(df, top_n=8)
+    features_chart(feat, paths)
+
+    # ---- model comparison + importance ----
+    models, results = fit_models(df, dataset, seed=42)
+    model_chart(results, paths)
+    importance_chart(results, paths)
+
+    # ---- survival ----
+    cph = cox_model(raw, dataset)
+    surv_rows = survival_chart(dataset, raw, paths)
+    surv_cox = cox_table(cph)
+
+    # NOTE: this only regenerates the 6 named charts. If you add more figures
+    # in report.py, mirror them here so the preview always matches the dataset.
+
+
 def _read(paths: Paths, dataset: str, name: str) -> pd.DataFrame | None:
     src = paths.root / "powerbi" / "data" / dataset / name
     if not src.exists():
@@ -130,6 +185,7 @@ def _cards(paths: Paths, dataset: str) -> list[tuple[str, str, str]]:
 
 
 def build_html(paths: Paths, dataset: str = "telco") -> str:
+    _regenerate_figures(paths, dataset)
     cards = _cards(paths, dataset)
     card_html = "".join(
         f"<div class='card'><div class='k'>{k}</div>"
@@ -138,7 +194,7 @@ def build_html(paths: Paths, dataset: str = "telco") -> str:
     )
     panels = "".join(
         f"<div class='panel'><h3>{title}</h3>"
-        f"<img src='{_img64(paths, name)}' alt='{title}'></div>"
+        f"<img src='{_img64(paths, dataset, name)}' alt='{title}'></div>"
         for name, title in FIGURES
     )
 

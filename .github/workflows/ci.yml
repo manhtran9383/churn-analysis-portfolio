@@ -11,7 +11,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        dataset: [telco, bank]
+        dataset: [telco, bank, hr]
 
     steps:
       - name: Checkout
