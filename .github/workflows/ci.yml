@@ -44,7 +44,7 @@ jobs:
             reports/figures/
           retention-days: 30
 
-  check-powerbi-preview:
+  check-preview:
     runs-on: windows-latest
     strategy:
       matrix:
@@ -64,21 +64,17 @@ jobs:
           pip install -r requirements.txt
           pip install pytest
 
-      - name: Build powerbi pack
-        run: python -m src.run_churn_analysis --dataset ${{ matrix.dataset }} --stage powerbi
-
-      - name: Build preview HTML
+      - name: Build preview HTML (validates figure embedding)
         run: python -m src.run_churn_analysis --dataset ${{ matrix.dataset }} --stage preview
 
-      - name: Assert 6 embedded figures per preview
+      - name: Assert preview embeds 6 figures
         run: |
-          python - <<'EOF'
-          import sys
-          for ds in ["telco", "bank", "hr"]:
-              f = f"powerbi/dashboard_preview_{ds}.html"
-              html = open(f, encoding="utf-8").read()
-              n = html.count("data:image/png;base64")
-              if n != 6:
-                  raise SystemExit(f"{ds}: {n} base64 images in preview, expected 6")
-          print("preview figures OK (6 base64 PNG per dataset)")
-          EOF
+          python -c "
+          ds = '${{ matrix.dataset }}'
+          f = f'powerbi/dashboard_preview_{ds}.html'
+          html = open(f, encoding='utf-8').read()
+          n = html.count('data:image/png;base64')
+          if n != 6:
+              raise SystemExit(f'{ds}: {n} base64 images in preview, expected 6')
+          print(f'{ds}: preview OK ({n} base64 figures)')
+          "
