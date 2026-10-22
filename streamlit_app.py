@@ -144,8 +144,9 @@ with tab_rank:
 
     n_test = int(len(y_true))
     k_default = min(500, max(50, n_test // 2))
-    k = min(int(st.slider("K — customers called first", 50, 1000, k_default, 50)),
-            n_test)
+    slider_k = int(st.slider("K — customers called first", 50, 1000, k_default, 50))
+    clamped = slider_k > n_test
+    k = min(slider_k, n_test)
     k_used = k
     idx = np.argsort(-proba)[:k]
     recall = y_true[idx].sum() / max(y_true.sum(), 1)
@@ -157,8 +158,12 @@ with tab_rank:
     c2.metric("Precision@K", f"{precision:.1%}")
     c3.metric("Base rate", f"{base_rate:.1%}")
     c4.metric("Lift", f"{lift:.2f}×")
-    if k < 500:
-        st.caption(f"K auto-clamped to {k_used} (test set has {n_test} rows)")
+    if clamped:
+        st.caption(f"K clamped from {slider_k} to {k_used} "
+                   f"(test set has {n_test} rows)")
+    elif k_default < 500:
+        st.caption(f"K default = n_test//2 = {k_used} "
+                   f"(test set has {n_test} rows)")
 
     ks = [k for k in (50, 100, 200, 500, 1000) if k <= n_test]
     curve = pd.DataFrame([

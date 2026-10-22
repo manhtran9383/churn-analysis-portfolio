@@ -130,7 +130,11 @@ def run(dataset: str = "telco"):
             cap = 500
         mask = tl["list_size"] == cap
     precision = tl.loc[mask, "churn_rate_pct"].values[0]
-    base_rate = prof["churn_rate"]
+    # base rate of the TEST SET (the baseline row), not the full base -- so the
+    # headline lift matches the app's Ranking tab (same denominator everywhere).
+    base_rate = float(
+        tl.loc[tl["list_size"] == tl["list_size"].max(), "churn_rate_pct"].values[0]
+    )
     lift = precision / base_rate
     print(f"Honest lift (test set): top-{cap} precision {precision:.1f}% "
           f"({lift:.2f}× base rate {base_rate:.2f}%)")
