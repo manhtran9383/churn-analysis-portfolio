@@ -59,6 +59,8 @@ DATASETS = {
                      "OnlineBackup", "DeviceProtection", "TechSupport",
                      "StreamingTV", "StreamingMovies"],
         "fig_dir": Path("reports/"),
+        "survival_segment": "Contract",
+        "time_unit": "months",
     },
     "bank": {
         "file": "Churn_Modelling.csv",
@@ -73,16 +75,37 @@ DATASETS = {
         "segments": ["Geography", "Gender", "IsActiveMember", "HasCrCard"],
         "services": [],
         "fig_dir": Path("reports/"),
+        "survival_segment": "Geography",
+        "time_unit": "years",
+    },
+    "hr": {
+        "file": "HR_Employee_Attrition.csv",
+        "label": "IBM HR Analytics Employee Attrition & Performance",
+        "target": "Attrition",
+        "positive": "Yes",
+        "id": "EmployeeNumber",
+        "tenure": "YearsAtCompany",
+        "monthly_revenue": "MonthlyIncome",
+        "total_revenue": None,
+        "currency": "USD",
+        "segments": ["Department", "JobRole", "BusinessTravel", "OverTime",
+                     "MaritalStatus", "Gender", "EducationField"],
+        "services": [],
+        "fig_dir": Path("reports/"),
+        "survival_segment": "Department",
+        "time_unit": "years",
     },
 }
 
 # Tenure bins for retention curves (dataset-aware)
-# Telco tenure is in months (0-72), Bank tenure is in years (0-10).
+# Telco tenure is in months (0-72), Bank/HR tenure is in years (0-10 / 0-40).
 TENURE_BINS = {
     "telco": [0, 12, 24, 36, 48, 60, 72, 84],
     "bank": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+    "hr": [0, 5, 10, 15, 20, 25, 30, 35, 40, 45],
 }
 TENURE_LABELS = {
     "telco": ["0-12", "12-24", "24-36", "36-48", "48-60", "60-72", "72-84"],
     "bank": ["0-1", "1-2", "2-3", "3-4", "4-5", "5-6", "6-7", "7-8", "8-9", "9-10", "10-11"],
+    "hr": ["0-5", "5-10", "10-15", "15-20", "20-25", "25-30", "30-35", "35-40", "40-45"],
 }

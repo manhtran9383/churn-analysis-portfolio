@@ -61,7 +61,7 @@ def churn_segment_chart(df_seg: pd.DataFrame, dataset: str, top_n: int = 8, path
 
 def retention_chart(df_ten: pd.DataFrame, dataset: str, paths: Paths = None):
     spec = DATASETS[dataset]
-    time_unit = "months" if dataset == "telco" else "years"
+    time_unit = spec.get("time_unit", "months")
     rates = df_ten["churn_rate"] * 100
     fig, ax = plt.subplots(figsize=(8, 4.5))
     ax.plot(df_ten["tenure_band"].astype(str), rates, marker="o", color="#d9534f")
@@ -141,7 +141,7 @@ def survival_chart(dataset: str, df, paths, group_col: str | None = None):
 
     spec = DATASETS[dataset]
     if group_col is None:
-        group_col = "Contract" if dataset == "telco" else "Geography"
+        group_col = spec.get("survival_segment", "Department")
 
     kmf_all = km_overall(df, dataset)
     curves = km_by_group(df, dataset, group_col)
@@ -150,7 +150,7 @@ def survival_chart(dataset: str, df, paths, group_col: str | None = None):
     kmf_all.plot_survival_function(ax=ax, label="All customers", color="#4472C4")
     for label, k in curves.items():
         k.plot_survival_function(ax=ax, label=f"{group_col} = {label}", alpha=0.7)
-    ax.set_xlabel("Tenure (months)", color="#444444")
+    ax.set_xlabel(f"Tenure ({spec.get('time_unit', 'months')})", color="#444444")
     ax.set_ylabel("Survival probability", color="#444444")
     ax.set_title(f"Kaplan-Meier survival curve - {spec['label']}",
                  color="#1a1a1a")

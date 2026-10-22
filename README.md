@@ -29,6 +29,7 @@ python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\act
 pip install -r requirements.txt
 python -m src.run_churn_analysis --dataset telco    # telecom deep-dive
 python -m src.run_churn_analysis --dataset bank     # bank comparison
+python -m src.run_churn_analysis --dataset hr       # new: IBM HR attrition (1,470 employees)
 ```
 
 Both run in ~30 s on a laptop.
@@ -67,6 +68,7 @@ churn-project/
 |----------------|-----------|------------------------|-----------------------------|-------------|----------------------|
 | Telecom Telco  | 26.54 %   | GradientBoosting 0.844 / 0.663 | Electronic check (45.3%) | ≈ 43 246 $/mo | 0.844 |
 | Bank           | 20.37 %   | GradientBoosting 0.867 / 0.714 | Germany (32.4%) | n/a (no revenue col) | 0.720 |
+| HR (IBM Attrition) | 16.12 % | Logistic 0.818 / 0.622 | Sales Representative (39.8%) | n/a (no revenue col) | 0.937 |
 
 ## Portfolio notes for the conversation with a recruiter
 

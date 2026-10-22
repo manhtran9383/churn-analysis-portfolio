@@ -57,10 +57,18 @@ COX_COVARIATES = {
     "bank": ["CreditScore", "Age", "Balance", "NumOfProducts",
              "IsActiveMember", "HasCrCard", "EstimatedSalary",
              "Geography", "Gender"],
+    "hr": ["Age", "MonthlyIncome", "Department", "JobRole", "BusinessTravel",
+           "OverTime", "MaritalStatus", "Gender", "JobSatisfaction",
+           "EnvironmentSatisfaction", "WorkLifeBalance", "JobInvolvement",
+           "TotalWorkingYears", "YearsInCurrentRole", "YearsSinceLastPromotion",
+           "YearsWithCurrManager", "NumCompaniesWorked", "StockOptionLevel",
+           "PercentSalaryHike", "DistanceFromHome", "JobLevel"],
 }
 
 # Horizons (in the dataset's time unit) at which survival is reported.
-HORIZONS = {"telco": [6, 12, 24, 36, 48, 60, 72], "bank": [1, 2, 3, 5, 7, 10]}
+HORIZONS = {"telco": [6, 12, 24, 36, 48, 60, 72],
+            "bank": [1, 2, 3, 5, 7, 10],
+            "hr": [1, 2, 3, 5, 7, 10, 15, 20]}
 
 
 # ---------------------------------------------------------------------------

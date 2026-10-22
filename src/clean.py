@@ -65,6 +65,14 @@ def clean(df: pd.DataFrame, dataset: str) -> pd.DataFrame:
     if "RowNumber" in out.columns:
         out = out.drop(columns=["RowNumber"])
 
+    # --- 4c. drop constant columns (zero information, breaks nothing but
+    #         inflates the feature matrix: EmployeeCount / Over18 / StandardHours) --
+    constants = [c for c in out.columns
+                 if c not in (spec["target"], "churn") and out[c].nunique(dropna=False) <= 1]
+    if constants:
+        logger.info("Dropped %d constant column(s): %s", len(constants), constants)
+        out = out.drop(columns=constants)
+
     # --- 5. yes/no / categorical string columns -> 0/1 / codes -------------
     object_cols = [c for c in out.columns
                    if out[c].dtype == "object"

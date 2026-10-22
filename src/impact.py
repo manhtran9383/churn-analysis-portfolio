@@ -51,6 +51,24 @@ def targeting_lift(df: pd.DataFrame, cap: int = None) -> pd.DataFrame:
     out = pd.DataFrame(rows)
     base_rate = float(df["churn"].mean()) * 100
     out["lift_vs_all_pp"] = (out["churn_rate_pct"] - base_rate).round(2)
+    # Always include the requested cap as a row so consumers can always find
+    # "top-500" (or whatever cap was asked for), even if the test set is smaller.
+    if cap is not None and not any(r["list_size"] == cap for r in rows) and cap > 0:
+        mask = pd.Series(True, index=df.index)
+        if cap < len(df):
+            mask.iloc[cap:] = False
+        seg = df[mask]
+        rows.append({
+            "list_size": cap,
+            "churners": int(seg["churn"].sum()),
+            "customers": int(len(seg)),
+            "churn_rate_pct": round(float(seg["churn"].mean()) * 100, 2),
+            "avg_risk": round(float(seg["churn_risk"].mean()), 4),
+            "lift_vs_all_pp": round(
+                float(seg["churn"].mean() * 100) - base_rate, 2),
+        })
+    out = pd.DataFrame(rows)
+    out["lift_vs_all_pp"] = (out["churn_rate_pct"] - base_rate).round(2)
     return out
 
 

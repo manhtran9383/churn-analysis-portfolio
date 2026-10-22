@@ -167,7 +167,7 @@ def run(paths: Paths | None = None, dataset: str = "telco") -> dict:
     # survival
     # survival: raw frame keeps the segment labels readable
     kmf_all = km_overall(raw, dataset)
-    seg_col = "Contract" if dataset == "telco" else "Geography"
+    seg_col = spec.get("survival_segment", "Department")
     curves = km_by_group(raw, dataset, seg_col)
     surv_rows = [{"group": "All customers", **survival_summary(kmf_all, HORIZONS[dataset])}]
     surv_rows += [

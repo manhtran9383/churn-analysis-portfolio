@@ -18,7 +18,10 @@ def load_raw(paths: Paths, dataset: str) -> pd.DataFrame:
     """Read a raw dataset and encode the target as 0/1."""
     spec = DATASETS[dataset]
     df = pd.read_csv(paths.raw_file(spec["file"]), dtype=str, keep_default_na=False)
-    df.columns = [c.strip() for c in df.columns]
+    # strip whitespace AND a UTF-8 BOM from header cells -- several public CSVs
+    # (e.g. the IBM HR export) start with "\ufeffAge", which silently corrupts the
+    # first column name and breaks any later column lookup.
+    df.columns = [c.strip().lstrip("\ufeff") for c in df.columns]
 
     df["churn"] = (df[spec["target"]].str.strip() == spec["positive"]).astype(int)
     return df
