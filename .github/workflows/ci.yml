@@ -64,6 +64,9 @@ jobs:
           pip install -r requirements.txt
           pip install pytest
 
+      - name: Build powerbi data pack
+        run: python -m src.run_churn_analysis --dataset ${{ matrix.dataset }} --stage powerbi
+
       - name: Build preview HTML (validates figure embedding)
         run: python -m src.run_churn_analysis --dataset ${{ matrix.dataset }} --stage preview
 

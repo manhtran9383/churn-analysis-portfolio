@@ -134,7 +134,6 @@ def run(dataset: str = "telco"):
     lift = precision / base_rate
     print(f"Honest lift (test set): top-{cap} precision {precision:.1f}% "
           f"({lift:.2f}× base rate {base_rate:.2f}%)")
-    print(f"\nSurvival (Cox PH): concordance = {conc:.3f}")
     print(f"\nOutputs: {paths.figures} | {excel_path}")
     return {"dataset": dataset, "results": results,
             "targeting": tl, "impact": impact, "paths": paths}

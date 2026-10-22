@@ -25,8 +25,8 @@ python -m src.run_churn_analysis --dataset bank --stage preview     # bank previ
 
 ## Data pack — 9 CSV files (per dataset)
 
-The 10 files below are produced for **either** `telco` or `bank` and land
-under `powerbi/data/<dataset>/`.
+The 9 files below are produced for **each** of `telco`, `bank` and `hr`, and
+land under `powerbi/data/<dataset>/`.
 
 | File | Rows | Grain | Key columns |
 |---|---|---|---|

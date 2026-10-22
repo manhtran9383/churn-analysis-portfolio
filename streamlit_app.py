@@ -142,8 +142,10 @@ with tab_rank:
     y_true = y_te.values
     base_rate = y_true.mean()
 
-    k = min(int(st.slider("K — customers called first", 50, 1000, 500, 50)),
-            int(len(y_true)))
+    n_test = int(len(y_true))
+    k_default = min(500, max(50, n_test // 2))
+    k = min(int(st.slider("K — customers called first", 50, 1000, k_default, 50)),
+            n_test)
     k_used = k
     idx = np.argsort(-proba)[:k]
     recall = y_true[idx].sum() / max(y_true.sum(), 1)
@@ -156,9 +158,9 @@ with tab_rank:
     c3.metric("Base rate", f"{base_rate:.1%}")
     c4.metric("Lift", f"{lift:.2f}×")
     if k < 500:
-        st.caption(f"K auto-clamped to {k_used} (test set has {len(y_true)} rows)")
+        st.caption(f"K auto-clamped to {k_used} (test set has {n_test} rows)")
 
-    ks = [50, 100, 200, 500, 1000]
+    ks = [k for k in (50, 100, 200, 500, 1000) if k <= n_test]
     curve = pd.DataFrame([
         {
             "K": kk,
